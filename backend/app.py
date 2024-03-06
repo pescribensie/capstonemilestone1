@@ -107,19 +107,19 @@ def get_stock_value_30(stock):
         abort(404, description="Error somewhere. Notify Percy")
 
 
-# @app.route("/api/portfolio/<stock>/<daterange>")
-# def get_stock_value_range(stock, daterange):
-#     url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock}&apikey={API_KEY}"
-#     r = requests.get(url)
-#     data = r.json()
-#     series = data['Time Series (Daily)']
-#     # lets use the data between the daterange which is in the format "YYYY-MM-DD_YYYY-MM-DD"
-#     start_date, end_date = daterange.split("_")
-#     filtered_data = {date: details for date, details in series.items() if start_date <= date <= end_date}
-#     past_stock={}
-#     past_stock["symbol"]=stock
-#     past_stock["values_daily"]=filtered_data
-#     return jsonify(past_stock)
+@app.route("/api/portfolio/<stock>/<daterange>")
+def get_stock_value_range(stock, daterange):
+    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock}&apikey={API_KEY}"
+    r = requests.get(url)
+    data = r.json()
+    series = data['Time Series (Daily)']
+    # lets use the data between the daterange which is in the format "YYYY-MM-DD_YYYY-MM-DD"
+    start_date, end_date = daterange.split("_")
+    filtered_data = {date: details for date, details in series.items() if start_date <= date <= end_date}
+    past_stock={}
+    past_stock["symbol"]=stock
+    past_stock["values_daily"]=filtered_data
+    return jsonify(past_stock)
 
 
 if __name__ == "__main__":

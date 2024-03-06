@@ -22,7 +22,10 @@ function App() {
         {/*>*/}
         {/*  Learn React*/}
         {/*</a>*/}
-      <MyComponent /> {/* Using MyComponent */}
+        {/*PARA QUE CARGUE MAS RAPIDO QUE EL FETCH SE HAGA EN APP.JS Y PASE LA DATA A AMBOS COMPONENTES.*/}
+        {/*AHORA MISMO HACE EL FETCH DOS VECES*/}
+
+      {/*<MyComponent /> /!* Using MyComponent *!/*/}
       <PortfolioComponent /> {/* Using PortfolioComponent */}
       <TotalValueComponent /> {/* Using TotalValueComponent */}
       </header>
