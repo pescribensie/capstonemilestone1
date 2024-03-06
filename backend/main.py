@@ -4,11 +4,13 @@ import os
 from flask import Flask, request, jsonify, abort
 from dotenv import load_dotenv
 from datetime import date, timedelta
+from flask_cors import CORS
 
 load_dotenv()
 API_KEY = os.getenv("ALPHA_VANTAGE_KEY")
 
 app = Flask(__name__)
+CORS(app)
 
 with open("userdb.json", 'r') as db:
     dbdict = json.load(db)
