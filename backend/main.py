@@ -5,6 +5,12 @@ from flask import Flask, request, jsonify, abort
 from dotenv import load_dotenv
 from datetime import date, timedelta
 from flask_cors import CORS
+from sqlalchemy.pool import NullPool
+import oracledb
+from models import db, USERS, STOCKS
+from flask_sqlalchemy import SQLAlchemy
+
+
 
 load_dotenv()
 API_KEY = os.getenv("ALPHA_VANTAGE_KEY")
@@ -12,14 +18,46 @@ API_KEY = os.getenv("ALPHA_VANTAGE_KEY")
 app = Flask(__name__)
 CORS(app)
 
+#(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.eu-madrid-1.oraclecloud.com))(connect_data=(service_name=g78d0608a013864_capstonedb_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+un = 'BACKEND'
+pw = 'PepperoniPizza1!'
+dsn = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.eu-madrid-1.oraclecloud.com))(connect_data=(service_name=g78d0608a013864_capstonedb_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))'
+
+
+pool = oracledb.create_pool(user=un, password=pw, dsn=dsn)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'oracle+oracledb://{un}:{pw}@{dsn}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'creator': pool.acquire,
+    'poolclass': NullPool
+}
+app.config['SQLALCHEMY_ECHO'] = True  # cambiar en prod
+
+db.init_app(app)
+
+# with app.app_context():
+#     db.create_all()
+
+
+
 with open("userdb.json", 'r') as db:
     dbdict = json.load(db)
 
+# def get_user_portfolio(userid):
+#     try:
+#         return dbdict[userid].keys()
+#     except KeyError:
+#         print("User not found in database.")
+
 def get_user_portfolio(userid):
-    try:
-        return dbdict[userid].keys()
-    except KeyError:
+    user = USERS.query.filter_by(USERID=userid).first()
+    if user:
+        return [stock.Symbol for stock in user.stocks]
+    else:
         print("User not found in database.")
+        return []
 
 
 def get_last_weekday():
@@ -83,21 +121,43 @@ def get_stock_value(ticker):
     return None
 
 
+# @app.route("/api/portfolio")
+# def get_portfolio():
+#     userid = "user1"
+#     portfolio = {"username": userid, "total_value": 0}
+#     user_portfolio = get_user_portfolio(userid)
+#
+#     for stock in user_portfolio:
+#         value = get_stock_value(stock)
+#         portfolio[stock] = {}
+#         portfolio[stock]["num"] = dbdict[userid][stock]
+#         portfolio[stock]["last_close_value"] = value
+#         portfolio["total_value"] += float(value)*dbdict[userid][stock]
+#
+#     return jsonify(portfolio)
+
 @app.route("/api/portfolio")
 def get_portfolio():
-    userid = "user1"
-    portfolio = {"username": userid, "total_value": 0}
-    user_portfolio = get_user_portfolio(userid)
 
-    for stock in user_portfolio:
-        value = get_stock_value(stock)
-        portfolio[stock] = {}
-        portfolio[stock]["num"] = dbdict[userid][stock]
-        portfolio[stock]["last_close_value"] = value
-        portfolio["total_value"] += float(value)*dbdict[userid][stock]
+    userid = 1
+
+    user = USERS.query.filter_by(USERID=userid).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    portfolio = {"username": user.USERNAME, "total_value": 0, "stocks": []}
+    for stock in user.stocks:
+        value = get_stock_value(stock.SYMBOL)
+        if value:
+            stock_info = {
+                "symbol": stock.SYMBOL,
+                "quantity": stock.QUANTITY,
+                "last_close_value": value
+            }
+            portfolio["stocks"].append(stock_info)
+            portfolio["total_value"] += float(value) * stock.QUANTITY
 
     return jsonify(portfolio)
-
 
 @app.route("/api/portfolio/<stock>")
 def get_stock_value_30(stock):
