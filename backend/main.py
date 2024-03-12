@@ -145,16 +145,14 @@ def get_portfolio():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    portfolio = {"username": user.USERNAME, "total_value": 0, "stocks": []}
+    portfolio = {"username": user.USERNAME, "total_value": 0}
     for stock in user.stocks:
         value = get_stock_value(stock.SYMBOL)
         if value:
-            stock_info = {
-                "symbol": stock.SYMBOL,
-                "quantity": stock.QUANTITY,
-                "last_close_value": value
+            portfolio[stock.SYMBOL] = {
+                "num_stocks": stock.QUANTITY,
+                "last_close": value
             }
-            portfolio["stocks"].append(stock_info)
             portfolio["total_value"] += float(value) * stock.QUANTITY
 
     return jsonify(portfolio)
