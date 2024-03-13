@@ -74,7 +74,7 @@ function PortfolioComponent() {
         return stockEntries.map(([stock, details]) => (
             <li key={stock} style={{ cursor: 'pointer' }}>
                 <div onClick={() => toggleDetailsVisibility(stock)}>  {/* si hace click en el stock, cambia el estado de visiblad */}
-                    {stock}: {details.num} shares at ${details.last_close_value} each for a total of ${(details.num * parseFloat(details.last_close_value)).toFixed(2)}
+                    {stock}: {details.num_stocks} shares at ${details.last_close} each for a total of ${(details.num_stocks * parseFloat(details.last_close)).toFixed(2)}
                 </div>
                 {visibleDetails[stock] && ( // si está visible (si hace click) muestra el div
                     <div>
