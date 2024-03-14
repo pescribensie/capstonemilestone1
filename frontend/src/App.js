@@ -4,30 +4,29 @@ import React, {useState, useEffect} from "react";
 import MyComponent  from "./MyComponent";
 import PortfolioComponent from "./PortfolioComponent";
 import TotalValueComponent from "./TotalValueComponent";
+import UpdateStockComponent from "./UpdateStockComponent";
 
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        {/*<img src={logo} className="App-logo" alt="logo" />*/}
-        {/*<p>*/}
-        {/*  Edit <code>src/App.js</code> and save to reload.*/}
-        {/*</p>*/}
-        {/*<a*/}
-        {/*  className="App-link"*/}
-        {/*  href="https://reactjs.org"*/}
-        {/*  target="_blank"*/}
-        {/*  rel="noopener noreferrer"*/}
-        {/*>*/}
-        {/*  Learn React*/}
-        {/*</a>*/}
-        {/*PARA QUE CARGUE MAS RAPIDO QUE EL FETCH SE HAGA EN APP.JS Y PASE LA DATA A AMBOS COMPONENTES.*/}
-        {/*AHORA MISMO HACE EL FETCH DOS VECES*/}
+        <div style={{ display: 'flex' }}>
 
-      {/*<MyComponent /> /!* Using MyComponent *!/*/}
-      <PortfolioComponent /> {/* Using PortfolioComponent */}
-      <TotalValueComponent /> {/* Using TotalValueComponent */}
+          <div className="debug-border" style={{ marginRight: '20px' }}>
+            <UpdateStockComponent />
+          </div>
+
+          <div>
+            <div className="debug-border">
+              <PortfolioComponent />
+            </div>
+            <div className="debug-border">
+              <TotalValueComponent />
+            </div>
+          </div>
+
+        </div>
       </header>
     </div>
   );

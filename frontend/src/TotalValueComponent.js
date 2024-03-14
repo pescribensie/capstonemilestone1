@@ -5,7 +5,9 @@ function TotalValueComponent() {
 
     useEffect(() => {
         // Call al cargar el componente
-        fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio')
+        // fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio')
+        fetch('/api/portfolio')
+
             .then(response => response.json())
             .then(data => setTotalValue(data.total_value))
             .catch(error => console.error('Error fetching portfolio data:', error));

@@ -7,7 +7,9 @@ function PortfolioComponent() {
     const [stockData, setStockData] = useState({});
 
     useEffect(() => {
-        fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio')
+        // fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio')
+        fetch('/api/portfolio')
+
             .then(response => response.json())
             .then(data => setPortfolio(data))
             .catch(error => console.error('Error fetching portfolio data:', error));
@@ -31,7 +33,9 @@ function PortfolioComponent() {
     const fetchDateRangeData = (stock) => {
         if (dateRange.start && dateRange.end) {
             const daterange = `${dateRange.start}_${dateRange.end}`; // el string para el date range
-            fetch(`https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio/${stock}/${daterange}`)
+            // fetch(`https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio/${stock}/${daterange}`)
+            fetch(`/api/portfolio/${stock}/${daterange}`)
+
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Failed to fetch date range data');
