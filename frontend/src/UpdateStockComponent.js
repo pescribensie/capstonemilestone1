@@ -27,13 +27,25 @@ function UpdateStockComponent() {
         }
     }, 300);
 
-    const handleSubmit = async (event) => {
-        event.preventDefault(); // para que no mande el form
+ const updateStock = async (symbol, qty) => {
+  try {
+    //
+    const response = await axios.post('http://localhost:5000/api/update_stock', {
+      symbol,
+      quantity: parseInt(qty, 10)
+    });
+    console.log(response.data);
+    //
+  } catch (error) {
+    console.error('Error updating stock:', error);
+  }
+};
 
-        // submit
-        console.log("Submitted stock symbol:", stockSymbol, "with quantity:", quantity);
-        // msj
-    };
+const handleSubmit = async (event) => {
+  event.preventDefault(); // para que no mande el form
+  await updateStock(stockSymbol, quantity); // update stock
+  // msj
+};
 
     const handleSelectSuggestion = (symbol) => {
         setStockSymbol(symbol);

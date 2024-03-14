@@ -42,8 +42,8 @@ db.init_app(app)
 
 
 
-with open("userdb.json", 'r') as db:
-    dbdict = json.load(db)
+# with open("userdb.json", 'r') as db:
+#     dbdict = json.load(db)
 
 # def get_user_portfolio(userid):
 #     try:
@@ -182,6 +182,34 @@ def get_stock_value_range(stock, daterange):
     past_stock["values_daily"]=filtered_data
     return jsonify(past_stock)
 
+@app.route("/api/update_stock", methods=['POST'])
+def update_stock():
+    try:
+        data = request.json
+        symbol = data.get('symbol')
+        quantity = data.get('quantity')
+        user_id = 1
+
+        stock = STOCKS.query.filter_by(USERID=user_id, SYMBOL=symbol).first()
+
+        if stock:
+            if quantity == 0:
+                db.session.delete(stock)
+            else:
+                stock.QUANTITY = quantity
+            db.session.commit()
+            return jsonify({"message": "Stock updated successfully"}), 200
+        else:
+            if quantity > 0:
+                new_stock = STOCKS(SYMBOL=symbol, QUANTITY=quantity, USERID=user_id)
+                db.session.add(new_stock)
+                db.session.commit()
+                return jsonify({"message": "New stock added successfully"}), 200
+            else:
+                return jsonify({"message": "No stock to add and quantity is zero"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug = True)
