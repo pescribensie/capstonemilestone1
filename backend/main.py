@@ -11,22 +11,24 @@ from models import db, USERS, STOCKS
 from flask_sqlalchemy import SQLAlchemy
 
 
-
+# Cargar las variables de entorno desde el archivo .env
 load_dotenv()
 API_KEY = os.getenv("ALPHA_VANTAGE_KEY")
 
+# Inicializar la aplicación Flask y configurar CORS
 app = Flask(__name__)
 CORS(app)
 
 #(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.eu-madrid-1.oraclecloud.com))(connect_data=(service_name=g78d0608a013864_capstonedb_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
-
+# Datos de conexión a la base de datos Oracle
 un = 'BACKEND'
 pw = 'PepperoniPizza1!'
 dsn = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.eu-madrid-1.oraclecloud.com))(connect_data=(service_name=g78d0608a013864_capstonedb_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))'
 
-
+# Crear un pool de conexiones a la base de datos
 pool = oracledb.create_pool(user=un, password=pw, dsn=dsn)
 
+# Configuración de SQLAlchemy para Flask
 app.config['SQLALCHEMY_DATABASE_URI'] = f'oracle+oracledb://{un}:{pw}@{dsn}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -35,6 +37,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 app.config['SQLALCHEMY_ECHO'] = True  # cambiar en prod
 
+# Inicializar la base de datos con la aplicación
 db.init_app(app)
 
 # with app.app_context():
@@ -51,6 +54,7 @@ db.init_app(app)
 #     except KeyError:
 #         print("User not found in database.")
 
+# Función para obtener el portafolio de un usuario
 def get_user_portfolio(userid):
     user = USERS.query.filter_by(USERID=userid).first()
     if user:
@@ -59,7 +63,7 @@ def get_user_portfolio(userid):
         print("User not found in database.")
         return []
 
-
+# Función para obtener el último día laborable
 def get_last_weekday():
     previous_day = date.today() - timedelta(days=1)
 
@@ -68,7 +72,7 @@ def get_last_weekday():
 
     return previous_day.strftime("%Y-%m-%d")
 
-
+# Función para obtener los datos de un stock en los últimos 30 días
 def get_stock30(ticker, days = 30):
     core_url = "https://www.alphavantage.co/query"
     parameters = {
@@ -99,7 +103,7 @@ def get_stock30(ticker, days = 30):
 
     return None
 
-
+# Función para obtener el valor de cierre del último día laborable de un stock
 def get_stock_value(ticker):
     core_url = "https://www.alphavantage.co/query"
     parameters = {
@@ -136,6 +140,7 @@ def get_stock_value(ticker):
 #
 #     return jsonify(portfolio)
 
+# Ruta de la API para obtener el portafolio
 @app.route("/api/portfolio")
 def get_portfolio():
 
@@ -157,7 +162,7 @@ def get_portfolio():
             portfolio["total_value"] += float_value * stock.QUANTITY
 
     return jsonify(portfolio)
-
+# Ruta de la API para obtener los valores de un stock en los últimos 30 días
 @app.route("/api/portfolio/<stock>")
 def get_stock_value_30(stock):
     stock_data = get_stock30(stock)
@@ -167,14 +172,14 @@ def get_stock_value_30(stock):
     else:
         abort(404, description="Error somewhere. Notify Percy")
 
-
+# Ruta de la API para obtener los valores de un stock en un rango de fechas específico
 @app.route("/api/portfolio/<stock>/<daterange>")
 def get_stock_value_range(stock, daterange):
     url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock}&apikey={API_KEY}"
     r = requests.get(url)
     data = r.json()
     series = data['Time Series (Daily)']
-    # lets use the data between the daterange which is in the format "YYYY-MM-DD_YYYY-MM-DD"
+    # Usar los datos entre el rango de fechas especificado en el formato "YYYY-MM-DD_YYYY-MM-DD"
     start_date, end_date = daterange.split("_")
     filtered_data = {date: details for date, details in series.items() if start_date <= date <= end_date}
     past_stock={}
@@ -182,34 +187,36 @@ def get_stock_value_range(stock, daterange):
     past_stock["values_daily"]=filtered_data
     return jsonify(past_stock)
 
+# Ruta de la API para actualizar la información de un usuario
 @app.route("/api/update_user", methods=['POST'])
 def update_user():
     try:
-        data = request.json
-        symbol = data.get('symbol')
-        quantity = data.get('quantity')
-        user_id = 1
+        data = request.json # Obtener los datos enviados por el usuario
+        symbol = data.get('symbol') # Obtener el símbolo del stock
+        quantity = data.get('quantity') # Obtener la cantidad de acciones
+        user_id = 1  # ID del usuario (estático en este ejemplo)
 
+        # Buscar si el stock ya existe para el usuario
         stock = STOCKS.query.filter_by(USERID=user_id, SYMBOL=symbol).first()
 
         if stock:
-            if quantity == 0:
+            if quantity == 0: # Si la cantidad es 0, eliminar el stock
                 db.session.delete(stock)
-            else:
+            else: # Actualizar la cantidad del stock
                 stock.QUANTITY = quantity
-            db.session.commit()
+            db.session.commit() # Guardar los cambios en la base de datos
             return jsonify({"message": "Stock updated successfully"}), 200
         else:
-            if quantity > 0:
+            if quantity > 0: # Si el stock no existe y la cantidad es mayor a 0, agregar el nuevo stock
                 new_stock = STOCKS(SYMBOL=symbol, QUANTITY=quantity, USERID=user_id)
                 db.session.add(new_stock)
-                db.session.commit()
+                db.session.commit() # Guardar los cambios en la base de datos
                 return jsonify({"message": "New stock added successfully"}), 200
             else:
                 return jsonify({"message": "No stock to add and quantity is zero"}), 200
     except Exception as e:
-        db.session.rollback()
+        db.session.rollback() # En caso de error, revertir los cambios
         return jsonify({"error": str(e)}), 500
-
+# Punto de entrada principal para la aplicación Flask
 if __name__ == "__main__":
-    app.run(debug = True)
+    app.run(debug = True)  # Iniciar la aplicación en modo depuración
