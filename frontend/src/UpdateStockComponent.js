@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { debounce } from 'lodash';
 
-function UpdateStockComponent() {
+function UpdateStockComponent(props) {
     const [stockSymbol, setStockSymbol] = useState('');
     const [quantity, setQuantity] = useState('');
     const [suggestions, setSuggestions] = useState([]);
@@ -29,22 +30,23 @@ function UpdateStockComponent() {
 
  const updateStock = async (symbol, qty) => {
   try {
-    //
-    const response = await axios.post('http://localhost:5000/api/update_stock', {
+    const response = await axios.post('http://localhost:5000/api/update_user', {
       symbol,
-      quantity: parseInt(qty, 10)
+      quantity: parseInt(qty, 10),
     });
     console.log(response.data);
-    //
+
+    // si update es successful, call onStockUpdate y notifica a App.js
+    props.onStockUpdate(); // This line is crucial
   } catch (error) {
     console.error('Error updating stock:', error);
   }
 };
 
 const handleSubmit = async (event) => {
-  event.preventDefault(); // para que no mande el form
-  await updateStock(stockSymbol, quantity); // update stock
-  // msj
+  event.preventDefault();
+  await updateStock(stockSymbol, quantity); // trigger props.onStockUpdate
+
 };
 
     const handleSelectSuggestion = (symbol) => {

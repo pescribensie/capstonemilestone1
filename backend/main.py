@@ -182,8 +182,8 @@ def get_stock_value_range(stock, daterange):
     past_stock["values_daily"]=filtered_data
     return jsonify(past_stock)
 
-@app.route("/api/update_stock", methods=['POST'])
-def update_stock():
+@app.route("/api/update_user", methods=['POST'])
+def update_user():
     try:
         data = request.json
         symbol = data.get('symbol')

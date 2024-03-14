@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 
-function PortfolioComponent() {
+function PortfolioComponent(updateTrigger) {
     const [portfolio, setPortfolio] = useState({});
     const [visibleDetails, setVisibleDetails] = useState({});
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -13,7 +14,7 @@ function PortfolioComponent() {
             .then(response => response.json())
             .then(data => setPortfolio(data))
             .catch(error => console.error('Error fetching portfolio data:', error));
-    }, []);
+    }, [updateTrigger]);
 
     const toggleDetailsVisibility = (stock) => {
         setVisibleDetails(prevVisibleDetails => ({ // togglea la visibilidad de los detalles. REVISAR

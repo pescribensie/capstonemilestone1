@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 
-function TotalValueComponent() {
+function TotalValueComponent(updateTrigger) {
     const [totalValue, setTotalValue] = useState(0);
 
     useEffect(() => {
@@ -11,7 +12,7 @@ function TotalValueComponent() {
             .then(response => response.json())
             .then(data => setTotalValue(data.total_value))
             .catch(error => console.error('Error fetching portfolio data:', error));
-    }, []); // Para que solo se ejecute una vez
+    }, [updateTrigger]); // Para que solo se ejecute una vez
 
     return (
         <div>
