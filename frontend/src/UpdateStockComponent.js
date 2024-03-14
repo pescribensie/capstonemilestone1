@@ -1,18 +1,21 @@
-
 import React, { useState } from 'react';
 import axios from 'axios';
 import { debounce } from 'lodash';
 
+// Componente para actualizar la información de acciones específicas
 function UpdateStockComponent(props) {
+    // Estado para el símbolo de la acción
     const [stockSymbol, setStockSymbol] = useState('');
+    // Estado para la cantidad de acciones
     const [quantity, setQuantity] = useState('');
+    // Estado para las sugerencias de búsqueda de acciones
     const [suggestions, setSuggestions] = useState([]);
 
-    // el debounce es para que no se fetch con cada input
+    // Debounce para limitar las solicitudes de búsqueda mientras se escribe, reduciendo las llamadas a la API
     const searchStocks = debounce(async (keyword) => {
-        if (!keyword.trim()) return setSuggestions([]); // limpia si empty
+        if (!keyword.trim()) return setSuggestions([]); // Limpia las sugerencias si la entrada está vacía
         try {
-            //revisar axios not sure la verdad
+            // Realiza una solicitud a la API de Alpha Vantage para buscar acciones por un término
             const response = await axios.get('https://www.alphavantage.co/query', {
                 params: {
                     function: 'SYMBOL_SEARCH',
@@ -20,38 +23,40 @@ function UpdateStockComponent(props) {
                     apikey: 'KMC0W0JHJHYPEQDO',
                 },
             });
-            // las sugerencias
+            // Establece las sugerencias basadas en las coincidencias encontradas
             setSuggestions(response.data.bestMatches || []);
         } catch (error) {
             console.error('Error fetching stock data:', error);
             setSuggestions([]);
         }
-    }, 300);
+    }, 300); // Establece un retraso de 300ms antes de ejecutar la búsqueda
 
- const updateStock = async (symbol, qty) => {
-  try {
-    const response = await axios.post('http://localhost:5000/api/update_user', {
-      symbol,
-      quantity: parseInt(qty, 10),
-    });
-    console.log(response.data);
+    // Función para actualizar la información de una acción específica
+    const updateStock = async (symbol, qty) => {
+        try {
+            const response = await axios.post('https://mcsbt-integration-pe.ew.r.appspot.com/api/update_user', {
+                symbol,
+                quantity: parseInt(qty, 10),
+            });
+            console.log(response.data);
 
-    // si update es successful, call onStockUpdate y notifica a App.js
-    props.onStockUpdate(); // This line is crucial
-  } catch (error) {
-    console.error('Error updating stock:', error);
-  }
-};
+            // Si la actualización es exitosa, llama a onStockUpdate para notificar a App.js
+            props.onStockUpdate(); // Esta línea es crucial
+        } catch (error) {
+            console.error('Error updating stock:', error);
+        }
+    };
 
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  await updateStock(stockSymbol, quantity); // trigger props.onStockUpdate
+    // Manejador para el envío del formulario
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        await updateStock(stockSymbol, quantity); // Llama a updateStock y luego a props.onStockUpdate
+    };
 
-};
-
+    // Manejador para seleccionar una sugerencia
     const handleSelectSuggestion = (symbol) => {
-        setStockSymbol(symbol);
-        setSuggestions([]); // limpia las sugerencias
+        setStockSymbol(symbol); // Actualiza el símbolo de la acción con el seleccionado
+        setSuggestions([]); // Limpia las sugerencias
     };
 
     return (
@@ -63,12 +68,13 @@ const handleSubmit = async (event) => {
                         value={stockSymbol}
                         onChange={(e) => {
                             setStockSymbol(e.target.value);
-                            searchStocks(e.target.value);
+                            searchStocks(e.target.value); // Busca sugerencias a medida que el usuario escribe
                         }}
                         placeholder="Stock Symbol"
                         required
                     />
                     {suggestions.length > 0 && (
+                        // Despliega la lista de sugerencias
                         <ul style={{
                             position: 'absolute',
                             zIndex: 1000,
@@ -102,7 +108,7 @@ const handleSubmit = async (event) => {
                 <input
                     type="number"
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    onChange={(e) => setQuantity(e.target.value)} // Actualiza la cantidad
                     placeholder="Quantity"
                     required
                     min="0"
@@ -113,4 +119,4 @@ const handleSubmit = async (event) => {
     );
 }
 
-export default UpdateStockComponent;
+export default UpdateStockComponent; // Exporta el componente para su uso en otros lugares de la aplicación
