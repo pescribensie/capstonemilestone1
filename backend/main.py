@@ -9,6 +9,10 @@ from sqlalchemy.pool import NullPool
 import oracledb
 from models import db, USERS, STOCKS
 from flask_sqlalchemy import SQLAlchemy
+import jwt
+import datetime
+from functools import wraps
+
 
 
 # Cargar las variables de entorno desde el archivo .env
@@ -36,6 +40,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'poolclass': NullPool
 }
 app.config['SQLALCHEMY_ECHO'] = True  # cambiar en prod
+app.config['SECRET_KEY'] = 'your_secret_key'
 
 # Inicializar la base de datos con la aplicación
 db.init_app(app)
@@ -53,6 +58,49 @@ db.init_app(app)
 #         return dbdict[userid].keys()
 #     except KeyError:
 #         print("User not found in database.")
+
+
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    auth = request.json
+
+    user = USERS.query.filter_by(USERNAME=auth.get('username')).first()
+    if user and user.PASSWORD == auth.get('password'):  # Pass check
+        token = jwt.encode({
+            'userid': user.USERID,
+            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
+        }, app.config['SECRET_KEY'])
+        return jsonify({'token': token})
+
+    return jsonify({'message': 'Invalid credentials'}), 401
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]
+
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            #current_user = USERS.query.filter_by(USERID=data['userid']).first()
+        except ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired'}), 401  # expirado
+        except DecodeError:
+            return jsonify({'message': 'Token is invalid'}), 401  # invalido
+        except Exception as e:
+            return jsonify({'message': 'An error occurred during token verification', 'error': str(e)}), 500  # otross
+
+        return f(*args, **kwargs)
+        #return f(current_user, *args, **kwargs)
+
+
+    return decorated
 
 # Función para obtener el portafolio de un usuario
 def get_user_portfolio(userid):
@@ -142,6 +190,7 @@ def get_stock_value(ticker):
 
 # Ruta de la API para obtener el portafolio
 @app.route("/api/portfolio")
+@token_required
 def get_portfolio():
 
     userid = 1
@@ -164,6 +213,7 @@ def get_portfolio():
     return jsonify(portfolio)
 # Ruta de la API para obtener los valores de un stock en los últimos 30 días
 @app.route("/api/portfolio/<stock>")
+@token_required
 def get_stock_value_30(stock):
     stock_data = get_stock30(stock)
 
@@ -174,6 +224,7 @@ def get_stock_value_30(stock):
 
 # Ruta de la API para obtener los valores de un stock en un rango de fechas específico
 @app.route("/api/portfolio/<stock>/<daterange>")
+@token_required
 def get_stock_value_range(stock, daterange):
     url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock}&apikey={API_KEY}"
     r = requests.get(url)
@@ -189,6 +240,7 @@ def get_stock_value_range(stock, daterange):
 
 # Ruta de la API para actualizar la información de un usuario
 @app.route("/api/update_user", methods=['POST'])
+@token_required
 def update_user():
     try:
         data = request.json # Obtener los datos enviados por el usuario

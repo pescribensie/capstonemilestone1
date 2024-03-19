@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 
-// Definición del componente PortfolioComponent
-function PortfolioComponent(updateTrigger) {
-    // Estado para almacenar el portafolio actual
+function PortfolioComponent({ updateTrigger }) {
     const [portfolio, setPortfolio] = useState({});
-    // Estado para controlar la visibilidad de los detalles de cada stock
     const [visibleDetails, setVisibleDetails] = useState({});
-    // Estado para manejar el rango de fechas seleccionado por el usuario
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
-    // Estado para almacenar los datos de stock basados en el rango de fechas
     const [stockData, setStockData] = useState({});
 
-    // Efecto para cargar los datos del portafolio desde la API cuando el componente se monta o se actualiza updateTrigger
     useEffect(() => {
-        // Realiza una solicitud fetch a la API para obtener los datos del portafolio
-        // fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio')
-        fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio')
-            .then(response => response.json())
-            .then(data => setPortfolio(data)) // Actualiza el estado del portafolio con los datos recibidos
-            .catch(error => console.error('Error fetching portfolio data:', error)); // Maneja errores de la solicitud
-    }, [updateTrigger]); // Dependencia del efecto: updateTrigger
+        const token = localStorage.getItem('token'); // JWT de localStorage
+
+        fetch('/api/portfolio', {
+            headers: {
+                'Authorization': `Bearer ${token}` // JWT en Authorization header
+            }
+        })
+        .then(response => response.json())
+        .then(data => setPortfolio(data))
+        .catch(error => console.error('Error fetching portfolio data:', error));
+    }, [updateTrigger]); // React to changes in updateTrigger
 
     // Función para alternar la visibilidad de los detalles de un stock específico
     const toggleDetailsVisibility = (stock) => {
@@ -41,22 +39,27 @@ function PortfolioComponent(updateTrigger) {
     // Función para cargar datos de stock basados en el rango de fechas seleccionado
     const fetchDateRangeData = (stock) => {
         if (dateRange.start && dateRange.end) {
-            const daterange = `${dateRange.start}_${dateRange.end}`; // Formato de string para el rango de fechas
-            // fetch(`https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio/${stock}/${daterange}`)
-            fetch(`https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio/${stock}/${daterange}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch date range data');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    setStockData(prevData => ({
-                        ...prevData,
-                        [stock]: data, // Actualiza los datos de stock con los nuevos datos recibidos
-                    }));
-                })
-                .catch(error => console.error('Error fetching date range data:', error));
+            const token = localStorage.getItem('token'); //  include  token
+            const daterange = `${dateRange.start}_${dateRange.end}`;
+
+            fetch(`/api/portfolio/${stock}/${daterange}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}` // Include  JWT
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch date range data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                setStockData(prevData => ({
+                    ...prevData,
+                    [stock]: data,
+                }));
+            })
+            .catch(error => console.error('Error fetching date range data:', error));
         }
     };
 
