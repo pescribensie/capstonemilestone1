@@ -67,7 +67,7 @@ function TotalValueComponent({ updateTrigger }) {
         const token = localStorage.getItem('token'); // token de localStorage
 
         // Make sure you send the Authorization header with the token
-        fetch('/api/portfolio', {
+        fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio', {
             headers: {
                 'Authorization': `Bearer ${token}` // Incluye  JWT
             }

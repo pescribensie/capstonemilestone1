@@ -161,7 +161,7 @@ function UpdateStockComponent(props) {
     const updateStock = async (symbol, qty) => {
     try {
         // Use authAxios to include the Authorization header automatically
-        const response = await authAxios.post('/api/update_user', {
+        const response = await authAxios.post('https://mcsbt-integration-pe.ew.r.appspot.com/api/update_user', {
             symbol: symbol,
             quantity: parseInt(qty, 10),
         });

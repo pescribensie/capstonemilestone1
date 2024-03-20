@@ -8,7 +8,7 @@ function LoginComponent({ onLoginSuccess }) {
     event.preventDefault();
     try {
       // API call para user auth
-      const response = await fetch('/api/login', {
+      const response = await fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

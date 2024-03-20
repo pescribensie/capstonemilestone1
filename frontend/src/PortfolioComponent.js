@@ -9,7 +9,7 @@ function PortfolioComponent({ updateTrigger, setCurrentStockData }) {
     useEffect(() => {
         const token = localStorage.getItem('token');
 
-        fetch('/api/portfolio', {
+        fetch('https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -53,7 +53,7 @@ function PortfolioComponent({ updateTrigger, setCurrentStockData }) {
             const token = localStorage.getItem('token');
             const daterange = `${dateRange.start}_${dateRange.end}`;
 
-            fetch(`/api/portfolio/${stock}/${daterange}`, {
+            fetch(`https://mcsbt-integration-pe.ew.r.appspot.com/api/portfolio/${stock}/${daterange}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
