@@ -12,6 +12,9 @@ from flask_sqlalchemy import SQLAlchemy
 import jwt
 import datetime
 from functools import wraps
+from werkzeug.security import check_password_hash
+import logging
+
 
 
 
@@ -61,19 +64,51 @@ db.init_app(app)
 
 
 
+# @app.route('/api/login', methods=['POST'])
+# def login():
+#     auth = request.json
+#
+#     user = USERS.query.filter_by(USERNAME=auth.get('username')).first()
+#     if user and user.PASSWORD == auth.get('password'):  # Pass check
+#         token = jwt.encode({
+#             'userid': user.USERID,
+#             'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
+#         }, app.config['SECRET_KEY'])
+#         return jsonify({'token': token})
+#
+#     return jsonify({'message': 'Invalid credentials'}), 401
+
+from werkzeug.security import check_password_hash
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
-    auth = request.json
+    try:
+        auth = request.json
+        username = auth.get('username')
+        password = auth.get('password')
 
-    user = USERS.query.filter_by(USERNAME=auth.get('username')).first()
-    if user and user.PASSWORD == auth.get('password'):  # Pass check
-        token = jwt.encode({
-            'userid': user.USERID,
-            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
-        }, app.config['SECRET_KEY'])
-        return jsonify({'token': token})
+        user = USERS.query.filter_by(USERNAME=username).first()
 
-    return jsonify({'message': 'Invalid credentials'}), 401
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Perform the hash check and print the result for debugging
+        hash_check_result = check_password_hash(user.PASSWORD, password)
+        print(f"Hash check result for user {username}: {hash_check_result}")  # Debug print
+        logging.info(f"Hash check result for user {username}: {hash_check_result}")  # Logging
+
+        if hash_check_result:
+            token = jwt.encode({
+                'userid': user.USERID,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            }, app.config['SECRET_KEY'], algorithm="HS256")
+            return jsonify({'token': token})
+        else:
+            return jsonify({'message': 'Invalid credentials'}), 401
+    except Exception as e:
+        logging.error(f'Error in login: {str(e)}')  # Log any error
+        return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
 
 def token_required(f):
     @wraps(f)
