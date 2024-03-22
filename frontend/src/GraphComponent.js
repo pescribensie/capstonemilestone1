@@ -12,16 +12,16 @@ function GraphComponent({ stockData }) {
     close: parseFloat(details["4. close"]),
   }));
 
-  // Find min and max values for 'close' to set the domain for YAxis
+  // min max
   const closeValues = data.map(item => item.close);
   const minY = Math.min(...closeValues);
   const maxY = Math.max(...closeValues);
 
-  // Optionally, you can add some padding to these values
+  //  padding
   const padding = (maxY - minY) * 0.05; // 5% padding
   const domain = [minY - padding, maxY + padding];
 
-  // Customize font size for axis ticks
+  // font
   const axisTickStyle = {
     fontSize: '12px', // Set the desired font size here
   };
