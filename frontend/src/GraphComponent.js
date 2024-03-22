@@ -6,11 +6,25 @@ function GraphComponent({ stockData }) {
     return <div>No data available</div>;
   }
 
-  // maneja data
+  // Handle data
   const data = Object.entries(stockData.values_daily).map(([date, details]) => ({
     date,
     close: parseFloat(details["4. close"]),
   }));
+
+  // Find min and max values for 'close' to set the domain for YAxis
+  const closeValues = data.map(item => item.close);
+  const minY = Math.min(...closeValues);
+  const maxY = Math.max(...closeValues);
+
+  // Optionally, you can add some padding to these values
+  const padding = (maxY - minY) * 0.05; // 5% padding
+  const domain = [minY - padding, maxY + padding];
+
+  // Customize font size for axis ticks
+  const axisTickStyle = {
+    fontSize: '12px', // Set the desired font size here
+  };
 
   return (
     <div>
@@ -23,8 +37,8 @@ function GraphComponent({ stockData }) {
         }}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
+        <XAxis dataKey="date" tick={axisTickStyle} />
+        <YAxis domain={domain} tick={axisTickStyle} />
         <Tooltip />
         <Legend />
         <Line type="monotone" dataKey="close" stroke="#8884d8" activeDot={{ r: 8 }} />
